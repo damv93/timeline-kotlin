@@ -1,10 +1,10 @@
 package com.airtable.interview.airtableschedule.timeline
 
-import com.airtable.interview.airtableschedule.models.Event
+import com.airtable.interview.airtableschedule.models.EventModel
 
 /**
  * UI state for the timeline screen.
  */
 data class TimelineUiState(
-    val events: List<Event> = emptyList(),
+    val eventLanes: List<List<EventModel>> = emptyList(),
 )

@@ -1,5 +1,11 @@
 package com.airtable.interview.airtableschedule.models
 
+import androidx.compose.ui.graphics.Color
+import java.util.Date
+import java.util.concurrent.TimeUnit
+import kotlin.math.abs
+import kotlin.random.Random
+
 /**
  * Takes a list of [Event]s and assigns them to lanes based on start/end dates.
  */
@@ -22,4 +28,16 @@ fun assignLanes(events: List<Event>): List<List<Event>> {
             }
         }
     return lanes
+}
+
+fun getDaysBetween(startDate: Date, endDate: Date): Long {
+    val diffInMillis: Long = abs(startDate.time - endDate.time)
+    return TimeUnit.DAYS.convert(diffInMillis, TimeUnit.MILLISECONDS)
+}
+
+fun getRandomColor(): Color {
+    val red = Random.nextFloat()
+    val green = Random.nextFloat()
+    val blue = Random.nextFloat()
+    return Color(red, green, blue)
 }
