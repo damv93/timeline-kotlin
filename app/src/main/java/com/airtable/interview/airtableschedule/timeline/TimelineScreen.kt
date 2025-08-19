@@ -1,6 +1,7 @@
 package com.airtable.interview.airtableschedule.timeline
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,17 +34,34 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.airtable.interview.airtableschedule.models.EventModel
+import com.airtable.interview.airtableschedule.timeline.ui.EventDetailsDialog
 
 /**
  * A screen that displays a timeline of events.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineScreen(
     viewModel: TimelineViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    TimelineView(uiState.eventLanes)
+    TimelineView(
+        eventLanes = uiState.eventLanes,
+        onEventClick = viewModel::onEventClick,
+    )
+
+    uiState.selectedEvent?.let { event ->
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.onEventDialogDismiss() },
+        ) {
+            EventDetailsDialog(
+                event = event,
+                onSave = viewModel::onEventSave,
+                onClose = { viewModel.onEventDialogDismiss() }
+            )
+        }
+    }
 }
 
 /**
@@ -51,7 +71,10 @@ fun TimelineScreen(
  */
 
 @Composable
-private fun TimelineView(eventLanes: List<List<EventModel>>) {
+private fun TimelineView(
+    eventLanes: List<List<EventModel>>,
+    onEventClick: (EventModel) -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -64,7 +87,7 @@ private fun TimelineView(eventLanes: List<List<EventModel>>) {
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(eventLanes) { laneEvents ->
-                TimelineLane(laneEvents)
+                TimelineLane(laneEvents, onEventClick)
             }
         }
 
@@ -80,7 +103,10 @@ private fun TimelineView(eventLanes: List<List<EventModel>>) {
 }
 
 @Composable
-private fun TimelineLane(events: List<EventModel>) {
+private fun TimelineLane(
+    events: List<EventModel>,
+    onEventClick: (EventModel) -> Unit,
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
@@ -89,7 +115,7 @@ private fun TimelineLane(events: List<EventModel>) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(events) { event ->
-            EventCard(event)
+            EventCard(event) { onEventClick(event) }
         }
     }
 }
@@ -101,7 +127,10 @@ private fun TimelineLane(events: List<EventModel>) {
  * @param event The event data to display.
  */
 @Composable
-private fun EventCard(event: EventModel) {
+private fun EventCard(
+    event: EventModel,
+    onClick: () -> Unit,
+) {
     // Scale factor to ensure proportionality while providing a readable minimum height.
     val cardHeight = (event.durationInDays * 20).dp
     val minHeight = 80.dp
@@ -112,7 +141,8 @@ private fun EventCard(event: EventModel) {
         modifier = Modifier
             .fillMaxWidth()
             .height(finalHeight)
-            .shadow(4.dp, RoundedCornerShape(8.dp)),
+            .shadow(4.dp, RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = event.color)
     ) {
